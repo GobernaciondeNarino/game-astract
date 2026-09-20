@@ -1,0 +1,27 @@
+name: Security Review
+
+# Revisión de seguridad automática con Claude Code Security Review
+# https://github.com/anthropics/claude-code-security-review
+# Requiere el secreto CLAUDE_API_KEY en Settings > Secrets and variables > Actions.
+
+permissions:
+  pull-requests: write
+  contents: read
+
+on:
+  pull_request:
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 2
+
+      - uses: anthropics/claude-code-security-review@main
+        with:
+          comment-pr: true
+          claude-api-key: ${{ secrets.CLAUDE_API_KEY }}
+          exclude-directories: "wj-includes/vendor,wj-includes/js/vendor,.claude/skills/apple-design/references"

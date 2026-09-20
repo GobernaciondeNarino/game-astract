@@ -1,0 +1,16 @@
+{
+  "extraKnownMarketplaces": {
+    "anthropic-agent-skills": {
+      "source": { "source": "github", "repo": "anthropics/skills" }
+    },
+    "chrome-devtools-plugins": {
+      "source": { "source": "github", "repo": "ChromeDevTools/chrome-devtools-mcp" }
+    }
+  },
+  "enabledPlugins": {
+    "document-skills@anthropic-agent-skills": true,
+    "example-skills@anthropic-agent-skills": true,
+    "chrome-devtools-mcp@chrome-devtools-plugins": true
+  },
+  "enableAllProjectMcpServers": true
+}

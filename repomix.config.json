@@ -1,0 +1,29 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "output": {
+    "filePath": "repomix-output.xml",
+    "style": "xml",
+    "fileSummary": true,
+    "directoryStructure": true,
+    "removeComments": false,
+    "showLineNumbers": false,
+    "git": { "sortByChanges": true }
+  },
+  "include": [],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      "wj-includes/js/vendor/**",
+      "wj-includes/vendor/**",
+      "wj-content/data/**",
+      "wj-content/config/**",
+      "wj-content/diplomas/**",
+      "wj-content/uploads/**",
+      ".claude/skills/apple-design/references/**",
+      "docs/*.pdf",
+      "repomix-output.*"
+    ]
+  },
+  "security": { "enableSecurityCheck": true }
+}

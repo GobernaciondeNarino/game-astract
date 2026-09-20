@@ -1,0 +1,29 @@
+# Dependencias de desarrollo (no se despliegan en Plesk)
+node_modules
+package-lock.json
+
+# Salidas de repomix
+repomix-output.*
+docs/repomix-output.*
+
+# Datos generados en tiempo de ejecución
+wj-content/data/*.json
+wj-content/data/*.json.php
+wj-content/config/*.json
+wj-content/config/*.json.php
+wj-content/diplomas/*
+!wj-content/diplomas/.htaccess
+!wj-content/diplomas/index.php
+wj-content/uploads/*
+!wj-content/uploads/logo-gobernacion.png
+!wj-content/uploads/.htaccess
+!wj-content/uploads/index.php
+
+# Capturas y resultados de pruebas
+tests/output/
+.playwright/
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log

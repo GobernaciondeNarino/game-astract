@@ -1,0 +1,21 @@
+{
+  "name": "game-astract",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Juego interactivo de razonamiento abstracto (three.js + PHP) de la Gobernación de Nariño.",
+  "scripts": {
+    "start": "php -S 0.0.0.0:8080 -t .",
+    "repomix": "repomix",
+    "repomix:web": "repomix --style markdown --output docs/repomix-output.md",
+    "mcp:chrome": "npx -y chrome-devtools-mcp@latest",
+    "test:e2e": "node tests/e2e.mjs",
+    "test:admin": "node tests/admin.mjs"
+  },
+  "devDependencies": {
+    "repomix": "^1.18.0",
+    "chrome-devtools-mcp": "^1.9.0",
+    "playwright": "^1.50.0"
+  },
+  "license": "MIT"
+}
