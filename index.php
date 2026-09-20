@@ -117,8 +117,10 @@ header('X-Frame-Options: SAMEORIGIN');
       </div>
       <span id="hud-level" class="wj-hud__level"></span>
       <div class="wj-hud__progress">
-        <span id="hud-progress"></span>
-        <div class="wj-hud__track"><div id="hud-bar" class="wj-hud__bar"></div></div>
+        <span id="hud-progress" class="wj-hud__count"></span>
+        <div id="hud-steps" class="wj-hud__steps" role="progressbar" aria-valuemin="0" aria-valuemax="<?= WJ_QUESTIONS_PER_LEVEL ?>" aria-valuenow="0" aria-label="Progreso del nivel">
+          <?php for ($i = 0; $i < WJ_QUESTIONS_PER_LEVEL; $i++): ?><span class="wj-hud__step"><i></i></span><?php endfor; ?>
+        </div>
       </div>
       <div class="wj-hud__stat"><small>Puntaje</small><strong id="hud-score">0</strong></div>
       <div class="wj-hud__stat"><small>Tiempo</small><strong id="hud-time">00:00</strong></div>

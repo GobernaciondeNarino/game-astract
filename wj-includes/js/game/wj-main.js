@@ -207,8 +207,14 @@ function updateHud() {
   const info = levelInfo(state.level);
   $('#hud-name').textContent = state.name;
   $('#hud-level').textContent = `Nivel ${state.level} · ${info.name}`;
-  $('#hud-progress').textContent = `Ejercicio ${Math.min(state.qIndex + 1, SESSION_SIZE)} de ${SESSION_SIZE}`;
-  $('#hud-bar').style.width = `${(state.qIndex / SESSION_SIZE) * 100}%`;
+  const current = Math.min(state.qIndex + 1, SESSION_SIZE);
+  $('#hud-progress').textContent = `Ejercicio ${current} de ${SESSION_SIZE}`;
+  const steps = $('#hud-steps');
+  steps.setAttribute('aria-valuenow', String(state.qIndex));
+  $$('.wj-hud__step', steps).forEach((el, i) => {
+    el.classList.toggle('is-done', i < state.qIndex);
+    el.classList.toggle('is-current', i === state.qIndex);
+  });
   $('#hud-score').textContent = String(state.score);
 }
 
