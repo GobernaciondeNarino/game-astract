@@ -347,7 +347,7 @@ export class Stage {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.autoClear = false;
     this.views = new Set();
-    this.clock = new THREE.Clock();
+    this.startedAt = performance.now();
     this.running = false;
     this.onResize = () => this.resize();
     window.addEventListener('resize', this.onResize);
@@ -379,7 +379,7 @@ export class Stage {
   }
 
   renderAll() {
-    const t = this.clock.getElapsedTime();
+    const t = (performance.now() - this.startedAt) / 1000;
     const r = this.renderer;
     const W = window.innerWidth;
     const H = window.innerHeight;

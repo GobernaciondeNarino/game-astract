@@ -21,7 +21,7 @@ define('WJ_DIPLOMAS_DIR', WJ_CONTENT_DIR . '/diplomas');
 define('WJ_SITE_NAME', 'Razonamiento Abstracto');
 define('WJ_ENTITY_NAME', 'Gobernación de Nariño');
 define('WJ_ENTITY_AREA', 'Secretaría TIC, Innovación y Gobierno Abierto');
-define('WJ_VERSION', '1.0.0');
+define('WJ_VERSION', '1.1.0');
 
 // Reglas del juego -----------------------------------------------------------
 define('WJ_LEVELS', 4);                 // Niveles disponibles

@@ -24,6 +24,30 @@ $config = [
     'version' => WJ_VERSION,
 ];
 $v = WJ_VERSION;
+
+/** URL de un recurso con versión por fecha de modificación (evita cachés obsoletas). */
+function wj_asset(string $path): string
+{
+    $file = WJ_ROOT . '/' . $path;
+    $stamp = is_file($file) ? filemtime($file) : WJ_VERSION;
+    return $path . '?v=' . WJ_VERSION . '-' . $stamp;
+}
+
+// Mapa de importación: cada módulo ES se resuelve a su URL versionada, incluidos los
+// importados entre módulos, para que el navegador nunca mezcle versiones en caché.
+$importMap = [
+    'three' => './' . wj_asset('wj-includes/js/vendor/three/three.module.js'),
+    'three/addons/' => './wj-includes/js/vendor/three/',
+];
+foreach (glob(WJ_INCLUDES_DIR . '/js/vendor/three/*.js') ?: [] as $file) {
+    $rel = 'wj-includes/js/vendor/three/' . basename($file);
+    $importMap['./' . $rel] = './' . wj_asset($rel);
+}
+foreach (glob(WJ_INCLUDES_DIR . '/js/game/*.js') ?: [] as $file) {
+    $rel = 'wj-includes/js/game/' . basename($file);
+    $importMap['./' . $rel] = './' . wj_asset($rel);
+}
+header('Cache-Control: no-cache, must-revalidate');
 $titleWords = preg_split('/\s+/u', trim($site['site_name'])) ?: [$site['site_name']];
 $titleLast = array_pop($titleWords);
 $titleFirst = implode(' ', $titleWords);
@@ -42,17 +66,10 @@ header('X-Frame-Options: SAMEORIGIN');
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Hind+Madurai:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="wj-includes/css/wj-app.css?v=<?= wj_e($v) ?>">
-<script type="importmap">
-{
-  "imports": {
-    "three": "./wj-includes/js/vendor/three/three.module.js",
-    "three/addons/": "./wj-includes/js/vendor/three/"
-  }
-}
-</script>
+<link rel="stylesheet" href="<?= wj_e(wj_asset('wj-includes/css/wj-app.css')) ?>">
+<script type="importmap"><?= json_encode(['imports' => $importMap], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) ?></script>
 <script>window.WJ_CONFIG = <?= json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
-<script src="wj-includes/js/vendor/jspdf.umd.min.js?v=<?= wj_e($v) ?>" defer></script>
+<script src="<?= wj_e(wj_asset('wj-includes/js/vendor/jspdf.umd.min.js')) ?>" defer></script>
 </head>
 <body>
 <div id="wj-app" class="wj-app">
@@ -226,6 +243,6 @@ header('X-Frame-Options: SAMEORIGIN');
 
   <div id="wj-toast" class="wj-toast" role="status" aria-live="polite"></div>
 </div>
-<script type="module" src="wj-includes/js/game/wj-main.js?v=<?= wj_e($v) ?>"></script>
+<script type="module" src="<?= wj_e(wj_asset('wj-includes/js/game/wj-main.js')) ?>"></script>
 </body>
 </html>

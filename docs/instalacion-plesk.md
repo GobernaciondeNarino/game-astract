@@ -78,3 +78,7 @@ ranking usa **Ranking → Reiniciar** en el panel o elimina `leaderboard.json.ph
 
 Vuelve a copiar los archivos del repositorio **sin sobrescribir** `wj-content/config/`,
 `wj-content/data/` ni `wj-content/uploads/` para conservar configuración, ranking y logotipo.
+No hace falta vaciar la caché de los navegadores: `index.php` añade a cada script, módulo y hoja
+de estilos un sufijo `?v=` con la versión y la fecha de modificación del archivo (también en el
+mapa de importación de los módulos), de modo que cualquier archivo actualizado se descarga de
+nuevo automáticamente.
