@@ -3,7 +3,7 @@
  * temporizador, ranking y diplomas.
  */
 import { LEVELS, SESSION_SIZE, getSessionExercises, levelInfo } from './wj-exercises.js';
-import { Stage, buildMainScene, buildOptionScene, snapshotOption, viewPreset, webglAvailable } from './wj-scene.js';
+import { Stage, buildMainScene, buildOptionScene, snapshotOption, setPreview, viewPreset, heroPreset, buildHeroScene, webglAvailable } from './wj-scene.js';
 import { fetchLeaderboard, submitScore, sendDiploma, formatTime } from './wj-api.js';
 import { renderDiploma, diplomaToPngBlob, diplomaToPdf, downloadBlob, slugify } from './wj-diploma.js';
 
@@ -33,7 +33,8 @@ const state = {
   levelsCompletedThisGame: 0,
   lastRank: null,
   submitted: false,
-  views: { main: null, options: [] },
+  views: { main: null, options: [], hero: null },
+  heroPortrait: null,
   diploma: null,
 };
 
@@ -153,7 +154,7 @@ async function refreshLeaderboard(highlightRank = null) {
   list.innerHTML = '<li class="wj-board__empty">Cargando…</li>';
   const { top, local } = await fetchLeaderboard();
   if (!top.length) {
-    list.innerHTML = '<li class="wj-board__empty">Aún no hay participantes. ¡Sé el primero!</li>';
+    list.innerHTML = '<li class="wj-board__empty">Todavía no hay puntajes. Completa un ejercicio para abrir la lista.</li>';
   } else {
     list.innerHTML = top.map((r) => `
       <li class="${highlightRank === r.rank && r.name === state.name ? 'is-me' : ''}">
@@ -163,7 +164,7 @@ async function refreshLeaderboard(highlightRank = null) {
         <span class="wj-board__time">${r.timeLabel}</span>
       </li>`).join('');
   }
-  note.textContent = local ? 'Ranking guardado en este dispositivo (sin conexión con el servidor).' : 'Mayor puntaje primero; a igual puntaje, menor tiempo.';
+  note.textContent = local ? 'Ranking guardado en este dispositivo (sin conexión con el servidor).' : '';
 }
 
 function escapeHtml(s) {
@@ -263,6 +264,8 @@ function loadQuestion() {
     : 'Rueda, pellizco o botones para acercar · arrastra para inclinar';
 
   stage.clearViews();
+  state.views.hero = null;
+  state.heroPortrait = null;
   buildMainView(ex);
 
   const optPreset = viewPreset(ex.kind, 'option');
@@ -280,6 +283,28 @@ function loadQuestion() {
   $('#btn-confirm').disabled = true;
   updateHud();
   requestAnimationFrame(() => stage.refit());
+}
+
+function heroIsPortrait() {
+  return window.innerWidth / Math.max(window.innerHeight, 1) < 1.0;
+}
+
+function showHero() {
+  const el = $('#hero-3d');
+  if (!el) return;
+  if (!el.getClientRects().length) { hideHero(); return; } // oculta en pantallas estrechas
+  const portrait = heroIsPortrait();
+  if (state.views.hero && state.heroPortrait === portrait) return;
+  if (state.views.hero) stage.removeView(state.views.hero);
+  state.views.hero = stage.addView(el, heroPreset());
+  buildHeroScene(state.views.hero, portrait);
+  state.heroPortrait = portrait;
+}
+
+function hideHero() {
+  if (state.views.hero) stage.removeView(state.views.hero);
+  state.views.hero = null;
+  state.heroPortrait = null;
 }
 
 function stageIsPortrait() {
@@ -307,6 +332,8 @@ function selectOption(index) {
     b.setAttribute('aria-pressed', i === index ? 'true' : 'false');
   });
   $('#btn-confirm').disabled = false;
+  const ex = state.questions[state.qIndex];
+  setPreview(state.views.main, ex.options[index].spec, 'preview');
 }
 
 function confirmAnswer() {
@@ -320,15 +347,17 @@ function confirmAnswer() {
   if (chosen.correct) {
     state.score += POINTS * ex.level;
     btn.classList.add('is-correct');
+    setPreview(state.views.main, chosen.spec, 'correct');
     updateHud();
     toast(`¡Correcto! +${POINTS * ex.level} puntos`, 'ok');
-    setTimeout(nextQuestion, 700);
+    setTimeout(nextQuestion, 800);
   } else {
     btn.classList.add('is-wrong');
     const correctIndex = ex.options.findIndex((o) => o.correct);
     optionButtons[correctIndex].classList.add('is-correct');
+    setPreview(state.views.main, ex.options[correctIndex].spec, 'correct');
     pauseTimer();
-    setTimeout(() => showWrong(ex, chosen), 500);
+    setTimeout(() => showWrong(ex, chosen), 600);
   }
 }
 
@@ -487,7 +516,12 @@ function goToNextLevel() {
 function backToStart(highlightRank = null) {
   pauseTimer();
   stage.clearViews();
+  state.views.main = null;
+  state.views.options = [];
+  state.views.hero = null;
+  state.heroPortrait = null;
   showScreen('screen-start');
+  showHero();
   refreshLeaderboard(highlightRank);
 }
 
@@ -518,12 +552,13 @@ function bindEvents() {
     try { localStorage.setItem(LAST_NAME_KEY, name); } catch (e2) { /* ignore */ }
     applyProgress();
     renderLevels();
+    hideHero();
     showScreen('screen-levels');
   });
 
   $('#btn-instructions').addEventListener('click', () => openModal('modal-instructions'));
   $$('[data-close]').forEach((b) => b.addEventListener('click', () => closeModal(b.dataset.close)));
-  $('#btn-change-name').addEventListener('click', () => { showScreen('screen-start'); $('#start-name').focus(); });
+  $('#btn-change-name').addEventListener('click', () => { showScreen('screen-start'); showHero(); $('#start-name').focus(); });
   $('#btn-quit').addEventListener('click', quitGame);
   $('#btn-confirm').addEventListener('click', confirmAnswer);
   $('#btn-result-continue').addEventListener('click', () => { closeModal('modal-result'); backToStart(state.lastRank); });
@@ -554,6 +589,7 @@ function bindEvents() {
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
+      if (document.body.dataset.screen === 'screen-start') showHero();
       if (document.body.dataset.screen !== 'screen-game' || !state.questions.length) return;
       if (stageIsPortrait() !== state.portrait) buildMainView(state.questions[state.qIndex]);
     }, 200);
@@ -579,6 +615,7 @@ function init() {
     if (last) $('#start-name').value = last;
   } catch (e) { /* ignore */ }
   showScreen('screen-start');
+  showHero();
   refreshLeaderboard();
 
   // Gancho de depuración/pruebas automatizadas: index.php?debug=1
@@ -589,6 +626,7 @@ function init() {
       selectOption,
       confirmAnswer,
       correctIndex: () => state.questions[state.qIndex].options.findIndex((o) => o.correct),
+      hasPreview: () => !!(state.views.main && state.views.main.previewObj),
     };
   }
 }

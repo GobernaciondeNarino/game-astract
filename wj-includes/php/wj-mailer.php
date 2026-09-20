@@ -72,11 +72,11 @@ function wj_send_diploma(string $to, string $name, int $level, string $levelName
             <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;background:#fffcf3;padding:32px;border:1px solid #348afb;border-radius:16px;color:#0b1f3a">
               <p style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#348afb;margin:0 0 8px">' . $entity . '</p>
               <h1 style="font-size:24px;margin:0 0 16px">¡Felicitaciones, ' . $safeName . '!</h1>
-              <p style="font-size:16px;line-height:1.5">Completaste el <strong>Nivel ' . $level . ' — ' . $safeLevel . '</strong> del ' . $siteName . '.
+              <p style="font-size:16px;line-height:1.5">Completaste el <strong>Nivel ' . $level . ' — ' . $safeLevel . '</strong> del reto «' . $siteName . '».
               Adjuntamos tu diploma en formato PDF.</p>
               <p style="font-size:13px;color:#4a4a4a">Este mensaje se generó automáticamente. Si no participaste en el reto, puedes ignorarlo.</p>
             </div>';
-        $mail->AltBody = "¡Felicitaciones, {$name}! Completaste el Nivel {$level} — {$levelName} del {$site['site_name']}. Adjuntamos tu diploma.";
+        $mail->AltBody = "¡Felicitaciones, {$name}! Completaste el Nivel {$level} — {$levelName} del reto «{$site['site_name']}». Adjuntamos tu diploma.";
         $mail->send();
         return ['ok' => true, 'error' => null];
     } catch (PHPMailerException $e) {

@@ -16,34 +16,46 @@
 
 | Rol | Valor | Uso |
 | --- | --- | --- |
-| Superficie | `#fffcf3` (crema) | Fondo general con retícula fina azul al 7 % y halos suaves |
-| Acento | `#348afb` (azul) | Botones primarios, líneas, bordes de fichas y aristas 3D, etiquetas |
-| Tinta | `#0b1f3a` (azul oscuro) | Títulos, símbolos de las matrices, trazos de los bloques |
-| Texto | `#16283f` / `#4a4a4a` | Cuerpo y texto secundario (contraste ≥ 7:1 sobre crema) |
-| Señal positiva | `#10a13b` (verde MIV) | Acierto, nivel completado |
-| Señal de alerta | `#c8102e` | Fallo, acciones destructivas del panel |
-| Destaque | `#ffd500` (amarillo MIV) | Sello del diploma, estrellas del nivel 4, tercer color de ciclo |
+| Fondo | `#060c1b` | Fondo general, cabecera (HUD) y modales; retícula fina azul al 6 % |
+| Superficie | `#0b1428` / `#0d1a33` | Tarjetas, campos de texto y fichas 3D |
+| Acento | `#348afb` (azul) | Botones primarios, líneas, bordes de fichas, aristas 3D, etiquetas |
+| Texto | `#e8eefc` / `#b7c3dc` / `#8a9bbd` | Títulos, cuerpo y texto secundario (contraste ≥ 7:1 sobre el fondo) |
+| Señal positiva | `#22c05c` | Acierto, nivel completado (ajuste luminoso del verde MIV para fondo oscuro) |
+| Señal de alerta | `#ff4d63` | Fallo, acciones destructivas |
+| Destaque | `#f5923e` (naranja) y `#ffd500` (amarillo MIV) | Figuras de portada, ciclo de color de objetos, sello y estrellas |
 
-Tipografía: Hind Madurai (Google Fonts) con respaldo `system-ui`. Escala: 36/30 px títulos,
-20 px pregunta, 16 px cuerpo, 12 px eyebrows en mayúsculas con tracking 0.2 em.
+Tipografía: **Chakra Petch** (Google Fonts) para títulos, etiquetas y botones en mayúsculas con
+tracking amplio; **Hind Madurai** (tipografía institucional) para el cuerpo de texto. Escala:
+96/64 px título de portada, 26 px títulos de modal, 20 px pregunta, 16 px cuerpo, 12–13 px
+etiquetas en mayúsculas.
+
+## Bisel y esquineras
+
+Botones, insignias y fichas 3D comparten un mismo trazo: cuadrado con las esquinas
+superior-izquierda e inferior-derecha cortadas en diagonal (`clip-path` en HTML, `ExtrudeGeometry`
+de una forma biselada en three.js). Las tarjetas (ranking, niveles, modales) llevan esquineras
+azules en L arriba-izquierda y abajo-derecha. Las tarjetas de opción dibujan el borde biselado como
+un anillo (polígono con hueco) para que el render 3D del lienzo inferior se vea a través de ellas.
 
 ## Elemento distintivo
 
-Un solo lienzo WebGL renderiza, mediante *scissor viewports*, la escena principal y las cuatro
-opciones dentro de tarjetas HTML translúcidas. Los objetos son la identidad: fichas blancas con
-borde azul, cubos de vidrio con aristas cilíndricas, símbolos dibujados en canvas y proyectados
-como texturas. La ficha faltante siempre es una silueta punteada con «?».
+Un solo lienzo WebGL renderiza, mediante *scissor viewports*, la portada (figuras 3D flotantes:
+anillo hexagonal, estrella, triángulo, toro, cruz y flecha), la escena principal y las cuatro
+opciones dentro de tarjetas HTML translúcidas. Al seleccionar una opción, esta se coloca en el
+hueco del «?» de la escena principal (con marco azul) para comprobar la continuidad; al confirmar,
+el marco pasa a verde o, si se falló, el hueco muestra la respuesta correcta.
 
 ## Decisiones de usabilidad
 
 - Controles de al menos 44 px; teclas 1–4 / A–D y Enter como alternativa al ratón.
 - Selección y confirmación en dos pasos para evitar respuestas accidentales (un fallo termina la
   partida).
-- Feedback dentro de la interfaz (toast, colores de borde) y modales solo para hitos: fallo con
-  explicación y nivel completado con diploma.
+- Feedback dentro de la interfaz (toast, colores de borde, previsualización) y modales solo para
+  hitos: fallo con explicación y nivel completado con diploma.
 - Temporizador que se detiene en modales y cuando la pestaña se oculta.
 - En pantallas verticales las secuencias se muestran en 2×2 con numeración; el panel de
-  axiomas del nivel 4 es plegable.
+  axiomas del nivel 4 es plegable; la portada oculta las figuras flotantes por debajo de 700 px
+  y permite desplazamiento interno sin que el contenedor principal se desplace.
 - `prefers-reduced-motion` desactiva transiciones; el balanceo de los cubos se detiene en cuanto
   el usuario interactúa con la escena.
 

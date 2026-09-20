@@ -11,10 +11,16 @@ import { COLORS } from './wj-exercises.js';
 const HEX = {
   cream: 0xfffcf3,
   blue: 0x348afb,
+  blueDeep: 0x2456b8,
   navy: 0x0b1f3a,
+  tile: 0x0d1a33,
+  ink: 0xe8eefc,
   yellow: 0xffd500,
+  orange: 0xf5923e,
+  green: 0x22c05c,
+  red: 0xff4d63,
   white: 0xffffff,
-  edge: 0x9cc3ff,
+  edge: 0x5f8fd6,
 };
 
 const clamp = THREE.MathUtils.clamp;
@@ -48,19 +54,18 @@ function addLights(scene) {
   scene.add(new THREE.AmbientLight(0xffffff, 0.45));
 }
 
-function roundedRectShape(w, h, r) {
+/** Cuadrado con bisel en las esquinas superior-izquierda e inferior-derecha. */
+function chamferShape(w, h, c) {
   const s = new THREE.Shape();
   const x = -w / 2;
   const y = -h / 2;
-  s.moveTo(x + r, y);
-  s.lineTo(x + w - r, y);
-  s.quadraticCurveTo(x + w, y, x + w, y + r);
-  s.lineTo(x + w, y + h - r);
-  s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  s.lineTo(x + r, y + h);
-  s.quadraticCurveTo(x, y + h, x, y + h - r);
-  s.lineTo(x, y + r);
-  s.quadraticCurveTo(x, y, x + r, y);
+  s.moveTo(x + c, y + h);      // arriba-izquierda (cortada)
+  s.lineTo(x + w, y + h);      // arriba-derecha
+  s.lineTo(x + w, y + c);      // abajo-derecha (cortada)
+  s.lineTo(x + w - c, y);
+  s.lineTo(x, y);              // abajo-izquierda
+  s.lineTo(x, y + h - c);
+  s.closePath();
   return s;
 }
 
@@ -68,42 +73,47 @@ const tileGeoCache = new Map();
 function tileGeometry(size) {
   const key = size.toFixed(3);
   if (!tileGeoCache.has(key)) {
-    const geo = new THREE.ExtrudeGeometry(roundedRectShape(size, size, size * 0.1), {
+    const geo = new THREE.ExtrudeGeometry(chamferShape(size, size, size * 0.14), {
       depth: size * 0.06,
       bevelEnabled: true,
-      bevelThickness: size * 0.015,
-      bevelSize: size * 0.015,
-      bevelSegments: 3,
-      curveSegments: 12,
+      bevelThickness: size * 0.012,
+      bevelSize: size * 0.012,
+      bevelSegments: 2,
     });
     tileGeoCache.set(key, geo);
   }
   return tileGeoCache.get(key);
 }
 
-/** Ficha blanca con borde azul. `ghost` = ficha de la celda faltante. */
+/** Contorno biselado (línea) en un color dado. */
+function chamferOutline(size, z, colorHex, { dashed = false, scale = 1.005 } = {}) {
+  const pts = chamferShape(size * scale, size * scale, size * 0.14 * scale).getPoints(1);
+  const geo = new THREE.BufferGeometry().setFromPoints(pts.map((p) => new THREE.Vector3(p.x, p.y, z)));
+  const mat = dashed
+    ? new THREE.LineDashedMaterial({ color: colorHex, dashSize: size * 0.06, gapSize: size * 0.04 })
+    : new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 0.95 });
+  const line = new THREE.LineLoop(geo, mat);
+  if (dashed) line.computeLineDistances();
+  return line;
+}
+
+/** Ficha oscura biselada con borde azul. `ghost` = ficha de la celda faltante. */
 function makeTile(size, { ghost = false } = {}) {
   const g = new THREE.Group();
   const mat = new THREE.MeshStandardMaterial({
-    color: ghost ? HEX.cream : HEX.white,
-    emissive: ghost ? HEX.cream : HEX.white,
-    emissiveIntensity: ghost ? 0.2 : 0.28,
-    roughness: 0.6,
-    metalness: 0.02,
+    color: HEX.tile,
+    emissive: HEX.tile,
+    emissiveIntensity: ghost ? 0.1 : 0.35,
+    roughness: 0.55,
+    metalness: 0.15,
     transparent: ghost,
-    opacity: ghost ? 0.55 : 1,
+    opacity: ghost ? 0.35 : 1,
   });
   const mesh = new THREE.Mesh(tileGeometry(size), mat);
   g.add(mesh);
-  const pts = roundedRectShape(size * 1.005, size * 1.005, size * 0.1).getPoints(24);
-  const lineGeo = new THREE.BufferGeometry().setFromPoints(pts.map((p) => new THREE.Vector3(p.x, p.y, size * 0.08)));
-  const lineMat = ghost
-    ? new THREE.LineDashedMaterial({ color: HEX.blue, dashSize: size * 0.06, gapSize: size * 0.04 })
-    : new THREE.LineBasicMaterial({ color: HEX.blue, transparent: true, opacity: 0.8 });
-  const line = new THREE.LineLoop(lineGeo, lineMat);
-  if (ghost) line.computeLineDistances();
-  g.add(line);
+  g.add(chamferOutline(size, size * 0.08, HEX.blue, { dashed: ghost }));
   g.userData.depth = size * 0.08;
+  g.userData.size = size;
   return g;
 }
 
@@ -182,7 +192,7 @@ function makeGlassCube(size, { edgeColor = HEX.blue, edgeRadius = 0.012, opacity
   g.add(makeEdges(size, edgeRadius, edgeColor, ghost ? 0.35 : 1));
   if (vertices) {
     const dotGeo = new THREE.SphereGeometry(size * 0.025, 12, 8);
-    const dotMat = new THREE.MeshStandardMaterial({ color: HEX.navy, roughness: 0.5, transparent: ghost, opacity: ghost ? 0.35 : 1 });
+    const dotMat = new THREE.MeshStandardMaterial({ color: HEX.ink, emissive: HEX.ink, emissiveIntensity: 0.3, roughness: 0.5, transparent: ghost, opacity: ghost ? 0.35 : 1 });
     const h = size / 2;
     for (let x = -1; x <= 1; x += 2) for (let y = -1; y <= 1; y += 2) for (let z = -1; z <= 1; z += 2) {
       const d = new THREE.Mesh(dotGeo, dotMat);
@@ -494,12 +504,20 @@ function addSequenceMarkers(group, spacing, portrait, z, yOffset = 0) {
   }
 }
 
-function buildSeq2DMain(group, exercise, portrait) {
+function buildSeq2DMain(group, exercise, portrait, view) {
   const spacing = L1_TILE + 0.32;
   exercise.scene.cells.forEach((spec, i) => {
     const cell = spec ? buildSeq2DCell(spec) : buildSeq2DCell(null, { ghost: true });
     cell.position.copy(sequenceSlot(i, spacing, portrait));
     group.add(cell);
+    if (!spec) {
+      view.slot = {
+        ghost: cell,
+        position: cell.position.clone(),
+        build: (s) => buildSeq2DCell(s),
+        frame: (color) => chamferOutline(L1_TILE, L1_TILE * 0.085, color, { scale: 1.06 }),
+      };
+    }
   });
   addSequenceMarkers(group, spacing, portrait, 0.1);
 }
@@ -514,14 +532,14 @@ function buildMatrixCell(spec, size = 1.0, { ghost = false } = {}) {
     return tile;
   }
   const key = 'm2:' + JSON.stringify(spec);
-  const tex = canvasTexture(key, 512, (ctx) => drawMatrixCell(ctx, spec, 512));
+  const tex = canvasTexture(key, 512, (ctx) => drawMatrixCell(ctx, spec, 512, PALETTE.ink));
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(size * 0.9, size * 0.9), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
   plane.position.z = tile.userData.depth + 0.004;
   tile.add(plane);
   return tile;
 }
 
-function buildMatrixMain(group, exercise) {
+function buildMatrixMain(group, exercise, view) {
   const size = 1.0;
   const gap = 0.16;
   exercise.scene.cells.forEach((row, r) => {
@@ -529,6 +547,14 @@ function buildMatrixMain(group, exercise) {
       const cell = spec ? buildMatrixCell(spec, size) : buildMatrixCell(null, size, { ghost: true });
       cell.position.set((c - 1) * (size + gap), (1 - r) * (size + gap), 0);
       group.add(cell);
+      if (!spec) {
+        view.slot = {
+          ghost: cell,
+          position: cell.position.clone(),
+          build: (s) => buildMatrixCell(s, size),
+          frame: (color) => chamferOutline(size, size * 0.085, color, { scale: 1.07 }),
+        };
+      }
     });
   });
 }
@@ -552,13 +578,21 @@ function buildSeq3DCube(spec, { ghost = false } = {}) {
   return cube;
 }
 
-function buildSeq3DMain(group, exercise, portrait) {
+function buildSeq3DMain(group, exercise, portrait, view) {
   const spacing = L3_CUBE + (portrait ? 0.95 : 0.7);
   exercise.scene.cubes.forEach((spec, i) => {
     const cube = spec ? buildSeq3DCube(spec) : buildSeq3DCube(null, { ghost: true });
     cube.position.copy(sequenceSlot(i, spacing, portrait));
     cube.userData.sway = 0.1;
     group.add(cube);
+    if (!spec) {
+      view.slot = {
+        ghost: cube,
+        position: cube.position.clone(),
+        build: (s) => { const c = buildSeq3DCube(s); c.userData.sway = 0.1; return c; },
+        frame: (color) => makeEdges(L3_CUBE * 1.06, 0.02, color),
+      };
+    }
   });
   addSequenceMarkers(group, spacing, portrait, 0, -L3_CUBE * 0.15);
   const gizmo = makeAxisGizmo(0.55);
@@ -575,7 +609,7 @@ function buildBlock(spec, size = 1.0, { opaque = true } = {}) {
     new THREE.MeshStandardMaterial({ color: spec.polarity ? HEX.navy : HEX.cream, roughness: 0.5, metalness: 0.08, transparent: !opaque, opacity: opaque ? 1 : 0.35 }),
   );
   g.add(body);
-  g.add(makeEdges(size, size * 0.012, spec.polarity ? HEX.blue : HEX.navy));
+  g.add(makeEdges(size, size * 0.012, spec.polarity ? HEX.blue : HEX.edge));
   const key = 'blk:' + JSON.stringify(spec);
   const tex = canvasTexture(key, 512, (ctx) => drawBlockFace(ctx, spec, 512));
   const face = new THREE.Mesh(new THREE.PlaneGeometry(size * 0.97, size * 0.97), new THREE.MeshBasicMaterial({ map: tex }));
@@ -584,7 +618,7 @@ function buildBlock(spec, size = 1.0, { opaque = true } = {}) {
   return g;
 }
 
-function buildCube3DMain(group, exercise) {
+function buildCube3DMain(group, exercise, view) {
   const cell = 1.0;
   const gap = 0.08;
   const pitch = cell + gap;
@@ -603,6 +637,12 @@ function buildCube3DMain(group, exercise) {
           const q = makeSprite('?', { color: PALETTE.blue, scale: 0.75 });
           block.add(q);
           block.userData.pulse = true;
+          view.slot = {
+            ghost: block,
+            position: toWorld(i, j, k),
+            build: (s) => buildBlock(s, cell),
+            frame: (color) => makeEdges(cell * 1.06, 0.022, color),
+          };
         } else {
           block = makeGlassCube(cell, { edgeColor: HEX.edge, edgeRadius: 0.006, opacity: 0.05, vertices: false });
         }
@@ -617,13 +657,13 @@ function buildCube3DMain(group, exercise) {
   group.add(gizmo);
   const numFont = 'bold 150px "Hind Madurai", "Segoe UI", sans-serif';
   for (let n = 0; n < 3; n++) {
-    const sx = makeSprite(String(n), { color: PALETTE.navy, scale: 0.34, font: numFont });
+    const sx = makeSprite(String(n), { color: PALETTE.ink, scale: 0.34, font: numFont });
     sx.position.set((n - 1) * pitch, -1.5 * pitch - 0.3, 1.5 * pitch + 0.15);
     group.add(sx);
-    const sy = makeSprite(String(n), { color: PALETTE.navy, scale: 0.34, font: numFont });
+    const sy = makeSprite(String(n), { color: PALETTE.ink, scale: 0.34, font: numFont });
     sy.position.set(-1.5 * pitch - 0.3, (n - 1) * pitch, 1.5 * pitch + 0.15);
     group.add(sy);
-    const sz = makeSprite(String(n), { color: PALETTE.navy, scale: 0.34, font: numFont });
+    const sz = makeSprite(String(n), { color: PALETTE.ink, scale: 0.34, font: numFont });
     sz.position.set(1.5 * pitch + 0.3, -1.5 * pitch - 0.1, (1 - n) * pitch);
     group.add(sz);
   }
@@ -632,11 +672,13 @@ function buildCube3DMain(group, exercise) {
 /** Construye la escena principal de un ejercicio en la vista. */
 export function buildMainScene(view, exercise, { portrait = false } = {}) {
   const g = view.group;
+  view.slot = null;
+  view.previewObj = null;
   switch (exercise.kind) {
-    case 'seq2d': buildSeq2DMain(g, exercise, portrait); break;
-    case 'matrix2d': buildMatrixMain(g, exercise); break;
-    case 'seq3d': buildSeq3DMain(g, exercise, portrait); break;
-    case 'cube3d': buildCube3DMain(g, exercise); break;
+    case 'seq2d': buildSeq2DMain(g, exercise, portrait, view); break;
+    case 'matrix2d': buildMatrixMain(g, exercise, view); break;
+    case 'seq3d': buildSeq3DMain(g, exercise, portrait, view); break;
+    case 'cube3d': buildCube3DMain(g, exercise, view); break;
     default: break;
   }
   // Pulso de los bloques "?" (nivel 4) y balanceo individual de cubos (nivel 3).
@@ -666,6 +708,148 @@ export function buildOptionScene(view, exercise, spec) {
     case 'cube3d': g.add(buildBlock(spec, 1.0)); break;
     default: break;
   }
+}
+
+const STATUS_COLOR = { preview: HEX.blue, correct: HEX.green, wrong: HEX.red };
+
+/**
+ * Muestra una opción en el hueco del "?" de la escena principal para ver la
+ * continuidad. `spec` null restaura el "?". `status`: preview | correct | wrong.
+ */
+export function setPreview(view, spec, status = 'preview') {
+  if (!view || !view.slot) return;
+  if (view.previewObj) {
+    view.group.remove(view.previewObj);
+    disposeObject(view.previewObj);
+    view.previewObj = null;
+  }
+  if (!spec) {
+    view.slot.ghost.visible = true;
+    return;
+  }
+  view.slot.ghost.visible = false;
+  const obj = view.slot.build(spec);
+  obj.position.copy(view.slot.position);
+  const frame = view.slot.frame(STATUS_COLOR[status] || HEX.blue);
+  obj.add(frame);
+  view.group.add(obj);
+  view.previewObj = obj;
+}
+
+// ---------------------------------------------------------------------------
+// Portada: figuras 3D flotantes
+// ---------------------------------------------------------------------------
+
+function ringShape(outer, inner, sides) {
+  const shape = new THREE.Shape();
+  for (let i = 0; i < sides; i++) {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / sides;
+    const x = outer * Math.cos(a);
+    const y = outer * Math.sin(a);
+    if (i === 0) shape.moveTo(x, y); else shape.lineTo(x, y);
+  }
+  shape.closePath();
+  const hole = new THREE.Path();
+  for (let i = 0; i < sides; i++) {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / sides;
+    const x = inner * Math.cos(a);
+    const y = inner * Math.sin(a);
+    if (i === 0) hole.moveTo(x, y); else hole.lineTo(x, y);
+  }
+  hole.closePath();
+  shape.holes.push(hole);
+  return shape;
+}
+
+function starShape(r) {
+  const shape = new THREE.Shape();
+  for (let i = 0; i < 10; i++) {
+    const rad = i % 2 === 0 ? r : r * 0.45;
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const x = rad * Math.cos(a);
+    const y = rad * Math.sin(a);
+    if (i === 0) shape.moveTo(x, y); else shape.lineTo(x, y);
+  }
+  shape.closePath();
+  return shape;
+}
+
+function plusShape(r, w) {
+  const shape = new THREE.Shape();
+  shape.moveTo(-w, r); shape.lineTo(w, r); shape.lineTo(w, w); shape.lineTo(r, w); shape.lineTo(r, -w);
+  shape.lineTo(w, -w); shape.lineTo(w, -r); shape.lineTo(-w, -r); shape.lineTo(-w, -w); shape.lineTo(-r, -w);
+  shape.lineTo(-r, w); shape.lineTo(-w, w); shape.closePath();
+  return shape;
+}
+
+function arrowShape(len, w) {
+  const shape = new THREE.Shape();
+  shape.moveTo(0, len / 2);
+  shape.lineTo(w, len / 2 - w * 1.1);
+  shape.lineTo(w * 0.42, len / 2 - w * 1.1);
+  shape.lineTo(w * 0.42, -len / 2);
+  shape.lineTo(-w * 0.42, -len / 2);
+  shape.lineTo(-w * 0.42, len / 2 - w * 1.1);
+  shape.lineTo(-w, len / 2 - w * 1.1);
+  shape.closePath();
+  return shape;
+}
+
+function extruded(shape, depth, colorHex) {
+  const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: depth * 0.12, bevelSize: depth * 0.12, bevelSegments: 2 });
+  geo.center();
+  return new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.42, metalness: 0.12 }));
+}
+
+/**
+ * Disposición de la portada en fracciones de pantalla (fx, fy ∈ 0..1) y tamaño
+ * relativo a la altura visible, para que nunca tape el texto ni la tarjeta.
+ */
+const HERO_LAYOUT = {
+  wide: [
+    ['hex', 0.555, 0.13, 0.11, 0.25], ['star', 0.79, 0.065, 0.065, 0.35], ['tri', 0.935, 0.15, 0.07, -0.3],
+    ['torus', 0.83, 0.885, 0.06, 0.6], ['plus', 0.40, 0.92, 0.058, 0.2], ['arrow', 0.60, 0.885, 0.08, -2.35],
+  ],
+  portrait: [
+    ['hex', 0.86, 0.06, 0.06, 0.25], ['star', 0.12, 0.035, 0.04, 0.35], ['tri', 0.92, 0.36, 0.04, -0.3],
+    ['torus', 0.08, 0.50, 0.035, 0.6], ['plus', 0.90, 0.56, 0.035, 0.2], ['arrow', 0.10, 0.30, 0.045, -2.35],
+  ],
+};
+
+export function heroPreset() {
+  return { fit: { w: 10, h: 5.6 }, angle: { az: 0, el: 0 }, sway: 0, padding: 1.0 };
+}
+
+/** Escena decorativa de la portada: figuras que flotan y se inclinan lentamente. */
+export function buildHeroScene(view, portrait = false) {
+  const layout = HERO_LAYOUT[portrait ? 'portrait' : 'wide'];
+  const makers = {
+    hex: () => extruded(ringShape(1, 0.5, 6), 0.42, HEX.blue),
+    star: () => extruded(starShape(1), 0.5, HEX.blue),
+    tri: () => extruded(ringShape(1, 0.48, 3), 0.45, HEX.blueDeep),
+    torus: () => new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.28, 20, 48), new THREE.MeshStandardMaterial({ color: HEX.blueDeep, roughness: 0.4, metalness: 0.15 })),
+    plus: () => extruded(plusShape(1, 0.34), 0.5, HEX.orange),
+    arrow: () => extruded(arrowShape(2.1, 0.75), 0.42, HEX.orange),
+  };
+  const items = layout.map(([kind, fx, fy, fsize, tiltZ], i) => {
+    const mesh = makers[kind]();
+    mesh.rotation.z = tiltZ;
+    view.group.add(mesh);
+    return { mesh, fx, fy, fsize, baseX: -0.25 + (i % 3) * 0.2, baseY: -0.35 + (i % 2) * 0.5, phase: i * 1.3 };
+  });
+  view.animations.push((t) => {
+    const fov = deg(view.camera.fov);
+    const d = view.baseDistance * view.zoomFactor;
+    const visH = 2 * d * Math.tan(fov / 2);
+    const visW = visH * view.camera.aspect;
+    for (const it of items) {
+      it.mesh.position.x = (it.fx - 0.5) * visW + Math.cos(t * 0.5 + it.phase) * visH * 0.008;
+      it.mesh.position.y = (0.5 - it.fy) * visH + Math.sin(t * 0.7 + it.phase) * visH * 0.014;
+      it.mesh.scale.setScalar(it.fsize * visH);
+      it.mesh.rotation.x = it.baseX + Math.sin(t * 0.6 + it.phase) * 0.28;
+      it.mesh.rotation.y = it.baseY + Math.cos(t * 0.45 + it.phase) * 0.38;
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------

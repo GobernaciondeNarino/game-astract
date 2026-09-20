@@ -18,7 +18,7 @@ define('WJ_UPLOADS_DIR', WJ_CONTENT_DIR . '/uploads');
 define('WJ_DIPLOMAS_DIR', WJ_CONTENT_DIR . '/diplomas');
 
 // Identidad ----------------------------------------------------------------
-define('WJ_SITE_NAME', 'Reto de Razonamiento Abstracto');
+define('WJ_SITE_NAME', 'Razonamiento Abstracto');
 define('WJ_ENTITY_NAME', 'Gobernación de Nariño');
 define('WJ_ENTITY_AREA', 'Secretaría TIC, Innovación y Gobierno Abierto');
 define('WJ_VERSION', '1.0.0');

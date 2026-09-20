@@ -56,9 +56,9 @@ export const LEVELS = [
 // ---------------------------------------------------------------------------
 
 export const COLORS = [
-  { key: 'navy', hex: 0x0b1f3a, name: 'azul oscuro' },
   { key: 'blue', hex: 0x348afb, name: 'azul' },
-  { key: 'yellow', hex: 0xffd500, name: 'amarillo' },
+  { key: 'orange', hex: 0xf5923e, name: 'naranja' },
+  { key: 'white', hex: 0xfffcf3, name: 'blanco' },
 ];
 
 export const SHAPES3D = [

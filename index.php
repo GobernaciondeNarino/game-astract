@@ -24,6 +24,9 @@ $config = [
     'version' => WJ_VERSION,
 ];
 $v = WJ_VERSION;
+$titleWords = preg_split('/\s+/u', trim($site['site_name'])) ?: [$site['site_name']];
+$titleLast = array_pop($titleWords);
+$titleFirst = implode(' ', $titleWords);
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 ?>
@@ -33,12 +36,12 @@ header('X-Frame-Options: SAMEORIGIN');
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Juego interactivo de razonamiento abstracto en 3D: cuatro niveles de matrices y secuencias, ranking y diplomas.">
-<meta name="theme-color" content="#fffcf3">
+<meta name="theme-color" content="#060c1b">
 <title><?= wj_e($site['site_name']) ?> · <?= wj_e($site['entity_name']) ?></title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpolygon points='32,4 56,18 56,46 32,60 8,46 8,18' fill='%23348afb'/%3E%3Ctext x='32' y='42' font-size='30' font-family='Arial' font-weight='bold' text-anchor='middle' fill='%23fffcf3'%3E?%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hind+Madurai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Hind+Madurai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="wj-includes/css/wj-app.css?v=<?= wj_e($v) ?>">
 <script type="importmap">
 {
@@ -64,33 +67,30 @@ header('X-Frame-Options: SAMEORIGIN');
 
   <!-- Inicio -->
   <section id="screen-start" class="wj-screen is-active" aria-labelledby="start-title">
+    <div id="hero-3d" class="wj-hero-3d" aria-hidden="true"></div>
     <div class="wj-start">
       <div class="wj-start__inner">
-        <header class="wj-start__head">
-          <?php if ($logoUrl): ?><img class="wj-start__logo" src="<?= wj_e($logoUrl) ?>" alt="<?= wj_e($site['entity_name']) ?>"><?php endif; ?>
-          <div>
-            <span class="wj-eyebrow"><?= wj_e($site['entity_name']) ?></span>
-            <h1 id="start-title"><?= wj_e($site['site_name']) ?></h1>
-          </div>
-        </header>
-        <div class="wj-start__grid">
-          <form id="start-form" class="wj-card wj-start__form" autocomplete="off" novalidate>
-            <label for="start-name">Nombre del participante</label>
-            <input id="start-name" class="wj-input" type="text" maxlength="40" placeholder="Escribe tu nombre" autocomplete="name" required>
-            <p id="start-error" class="wj-error" role="alert"></p>
-            <div class="wj-start__actions">
+        <div class="wj-hero">
+          <span class="wj-eyebrow"><?= wj_e($site['entity_name']) ?></span>
+          <?php if ($site['entity_area']): ?><p class="wj-hero__area"><?= wj_e($site['entity_area']) ?></p><?php endif; ?>
+          <h1 id="start-title" class="wj-hero__title"><?= $titleFirst !== '' ? wj_e($titleFirst) . ' ' : '' ?><span><?= wj_e($titleLast) ?></span></h1>
+          <p class="wj-hero__desc">Descubre la regla que ordena las figuras y elige la que falta. Cuatro niveles, <?= WJ_QUESTIONS_PER_LEVEL ?> ejercicios en cada uno. Un solo error termina la partida.</p>
+          <form id="start-form" class="wj-start__form" autocomplete="off" novalidate>
+            <label for="start-name" class="wj-label">Escribe tu nombre para empezar</label>
+            <div class="wj-start__row">
+              <input id="start-name" class="wj-input" type="text" maxlength="40" placeholder="Tu nombre" autocomplete="name" required>
               <button class="wj-btn wj-btn--primary" type="submit">Comenzar</button>
-              <button class="wj-btn wj-btn--ghost" type="button" id="btn-instructions">¿Cómo se juega?</button>
             </div>
-            <p class="wj-fine">4 niveles · <?= WJ_QUESTIONS_PER_LEVEL ?> ejercicios por nivel · un error termina la partida · diploma por cada nivel superado.</p>
+            <p id="start-error" class="wj-error" role="alert"></p>
+            <button class="wj-btn wj-btn--ghost wj-btn--small" type="button" id="btn-instructions">¿Cómo se juega?</button>
           </form>
-          <aside class="wj-card wj-start__board" aria-labelledby="board-title">
-            <h2 id="board-title">Mejores <?= WJ_LEADERBOARD_SIZE ?></h2>
-            <ol id="start-leaderboard" class="wj-board"></ol>
-            <p id="board-note" class="wj-fine"></p>
-          </aside>
         </div>
-        <p class="wj-start__foot"><?= wj_e($site['entity_area']) ?> · Razonamiento abstracto: identificar patrones, formular reglas y resolver problemas nuevos.</p>
+        <aside class="wj-card wj-board-card" aria-labelledby="board-title">
+          <h2 id="board-title" class="wj-card__title">Los <?= WJ_LEADERBOARD_SIZE ?> mejores</h2>
+          <p class="wj-card__sub">Ordenados por puntaje; si empatan, gana el menor tiempo.</p>
+          <ol id="start-leaderboard" class="wj-board"></ol>
+          <p id="board-note" class="wj-fine"></p>
+        </aside>
       </div>
     </div>
   </section>
@@ -113,7 +113,6 @@ header('X-Frame-Options: SAMEORIGIN');
   <section id="screen-game" class="wj-screen wj-game" aria-label="Ejercicio">
     <header class="wj-hud">
       <div class="wj-hud__brand">
-        <?php if ($logoUrl): ?><img src="<?= wj_e($logoUrl) ?>" alt=""><?php endif; ?>
         <span id="hud-name" class="wj-hud__name"></span>
       </div>
       <span id="hud-level" class="wj-hud__level"></span>
@@ -208,8 +207,8 @@ header('X-Frame-Options: SAMEORIGIN');
       <div class="wj-diploma">
         <img id="lc-diploma-img" class="wj-diploma__img" alt="Vista previa del diploma">
         <div class="wj-diploma__side">
-          <button class="wj-btn wj-btn--primary" type="button" id="btn-download-pdf">Descargar diploma (PDF)</button>
-          <button class="wj-btn" type="button" id="btn-download-png">Descargar imagen (PNG)</button>
+          <button class="wj-btn wj-btn--primary" type="button" id="btn-download-pdf">Descargar PDF</button>
+          <button class="wj-btn" type="button" id="btn-download-png">Descargar PNG</button>
           <div id="lc-mail" class="wj-mail">
             <label for="lc-email">Enviar el diploma a tu correo</label>
             <input id="lc-email" class="wj-input" type="email" placeholder="nombre@correo.com" autocomplete="email">

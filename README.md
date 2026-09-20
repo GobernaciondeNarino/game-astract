@@ -29,8 +29,10 @@ aplicaciones](docs/razonamiento-abstracto.md), del que se toman los cuatro tipos
 6. Los objetos se pueden **aumentar o reducir** (botones + / −, rueda del ratón o pellizco) y en
    los niveles 3D se pueden girar arrastrando.
 7. La interfaz ocupa `width: 100%; height: 100vh` sin desplazamiento, con estilo futurista sobre
-   fondo `#fffcf3` y botones y líneas `#348afb`, tipografía Hind Madurai y la paleta del Manual
-   de Identidad Visual de la Gobernación (ver [docs/diseno.md](docs/diseno.md)).
+   fondo oscuro `#060c1b`, texto claro, botones, líneas y fichas biseladas en `#348afb`,
+   tipografías Chakra Petch y Hind Madurai, y figuras 3D flotantes en la portada
+   (ver [docs/diseno.md](docs/diseno.md)). Al elegir una opción se previsualiza en el hueco
+   del «?» para comprobar la continuidad.
 
 ## Estructura (estilo WordPress con prefijo `wj-`)
 

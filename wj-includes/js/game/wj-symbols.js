@@ -12,6 +12,9 @@ export const PALETTE = {
   yellow: '#ffd500',
   gray: '#8a97a8',
   white: '#ffffff',
+  ink: '#e8eefc',
+  bg: '#060c1b',
+  orange: '#f5923e',
 };
 
 export function makeCanvas(size, height = size) {
@@ -101,7 +104,7 @@ function arrowPath(ctx, cx, cy, len, w) {
 /**
  * Celda de la matriz (nivel 2). Fondo transparente; trazos azul oscuro.
  */
-export function drawMatrixCell(ctx, spec, size, ink = PALETTE.navy) {
+export function drawMatrixCell(ctx, spec, size, ink = PALETTE.ink) {
   ctx.clearRect(0, 0, size, size);
   const cx = size / 2;
   const cy = size / 2;

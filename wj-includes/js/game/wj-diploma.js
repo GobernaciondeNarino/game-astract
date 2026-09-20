@@ -178,7 +178,7 @@ export async function renderDiploma(data) {
 
   ctx.fillStyle = MUTED;
   ctx.font = `400 28px ${F}`;
-  const body = `por completar satisfactoriamente los ${data.questions} ejercicios del Nivel ${data.level} (${data.levelName} — ${data.levelSubtitle}) del ${data.siteName}, ` +
+  const body = `por completar satisfactoriamente los ${data.questions} ejercicios del Nivel ${data.level} (${data.levelName} — ${data.levelSubtitle}) del reto «${data.siteName}», ` +
     `demostrando capacidad para identificar patrones, formular reglas y resolver problemas nuevos mediante razonamiento abstracto.`;
   wrapText(ctx, body, W / 2, 750, W - 420, 40);
 
