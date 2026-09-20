@@ -42,6 +42,7 @@ $importMap = [
 foreach (glob(WJ_INCLUDES_DIR . '/js/vendor/three/*.js') ?: [] as $file) {
     $rel = 'wj-includes/js/vendor/three/' . basename($file);
     $importMap['./' . $rel] = './' . wj_asset($rel);
+    $importMap['three/addons/' . basename($file)] = './' . wj_asset($rel);
 }
 foreach (glob(WJ_INCLUDES_DIR . '/js/game/*.js') ?: [] as $file) {
     $rel = 'wj-includes/js/game/' . basename($file);
